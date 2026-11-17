@@ -6,7 +6,7 @@ you native media players for the TV and its apps.
 
 This repository holds only the Home Assistant side, packaged for
 [HACS](https://hacs.xyz). The bridge service that runs on the TV, and the patches
-for the four supported apps, live in the separate Bigscreen Bridge project. Without
+for the four supported apps, live in the separate [bigscreen-bridge](https://github.com/shreyasajj/bigscreen-bridge) repository. Without
 the bridge running on the TV this integration has nothing to connect to.
 
 ## What you get

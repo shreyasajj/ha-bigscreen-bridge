@@ -2,7 +2,8 @@
 
 This repository is the home of the `bigscreen_bridge` custom integration and
 distributes it through HACS. The TV-side bridge service it talks to lives in the
-separate `bigscreen-bridge` repository, checked out next to this one as
+separate `bigscreen-bridge` repository
+(https://github.com/shreyasajj/bigscreen-bridge), checked out next to this one as
 `../dbus-ha-connection`.
 
 ## How to change the integration
