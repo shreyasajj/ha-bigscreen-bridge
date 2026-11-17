@@ -74,7 +74,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         return self.async_show_form(step_id="user", data_schema=vol.Schema({
             vol.Required("url"): str,
             vol.Required("token"): TextSelector(TextSelectorConfig(type=TextSelectorType.PASSWORD)),
-        }), errors=errors)
+        }), errors=errors, description_placeholders={"example": "http://tv.local:8765"})
 
     async def async_step_reauth(self, entry_data):
         return await self.async_step_reauth_confirm()

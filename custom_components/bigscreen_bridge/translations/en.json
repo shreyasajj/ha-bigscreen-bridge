@@ -4,7 +4,7 @@
     "step": {
       "user": {
         "title": "Connect your Bigscreen",
-        "description": "Enter the bridge address, for example http://tv.local:8765, and its private pairing token.",
+        "description": "Enter the bridge address, for example {example}, and its private pairing token.",
         "data": {
           "url": "Bridge URL",
           "token": "Pairing token"

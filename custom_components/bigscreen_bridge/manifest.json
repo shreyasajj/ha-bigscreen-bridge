@@ -10,7 +10,7 @@
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/shreyasajj/ha-bigscreen-bridge/issues",
   "requirements": [],
-  "version": "0.2.0",
+  "version": "0.2.1",
   "zeroconf": [
     "_bigscreen-bridge._tcp.local."
   ]

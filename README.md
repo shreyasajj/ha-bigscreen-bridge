@@ -58,7 +58,7 @@ data:
 
 ## Status
 
-Version 0.2.0. Tested with Home Assistant 2026.2.3 through automated tests and a
+Version 0.2.1. Tested with Home Assistant 2026.2.3 through automated tests and a
 temporary Home Assistant instance against a real TV. The minimum version in
 `hacs.json` (2024.11) is the oldest release that has the APIs used; it has not been
 tested there.
