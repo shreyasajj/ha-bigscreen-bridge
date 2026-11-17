@@ -29,7 +29,12 @@ the bridge running on the TV this integration has nothing to connect to.
 3. A bridge on the same network segment appears under **Settings → Devices &
    services → Discovered**. Otherwise choose **Add integration → Bigscreen Bridge**
    and enter its address, for example `http://tv.local:8765`.
-4. Enter the pairing token from `~/.config/bigscreen-bridge/config.json` on the TV.
+4. Enter the pairing code the TV shows: open **Bridge Status** from the Bigscreen
+   launcher. Until something has paired it shows a code by itself; afterwards press
+   OK on its **Pairing** card for a new one. Codes look like `7KQ4-MXD2`, last five
+   minutes and work once; Home Assistant receives its own token in exchange. The
+   token from `~/.config/bigscreen-bridge/config.json` is still accepted in the same
+   field.
 
 Discovery uses mDNS, which does not cross VLANs. If Home Assistant and the TV are on
 different subnets, enter the address by hand.

@@ -4,36 +4,37 @@
     "step": {
       "user": {
         "title": "Connect your Bigscreen",
-        "description": "Enter the bridge address, for example {example}, and its private pairing token.",
+        "description": "Enter the bridge address, for example {example}, and the pairing code shown on the TV (open Bridge Status from the launcher; press OK on its Pairing card for a new code). An existing bridge token also works.",
         "data": {
           "url": "Bridge URL",
-          "token": "Pairing token"
+          "code": "Pairing code"
         }
       },
       "reauth_confirm": {
-        "title": "Update pairing token",
-        "description": "Enter the current token for this bridge.",
+        "title": "Pair again",
+        "description": "Enter a new pairing code from the TV's Bridge Status screen (OK on its Pairing card), or a bridge token.",
         "data": {
-          "token": "Pairing token"
+          "code": "Pairing code"
         }
       },
       "pair": {
         "title": "Pair with {name}",
-        "description": "A Bigscreen Bridge was found at {url}. Enter its private pairing token from ~/.config/bigscreen-bridge/config.json on the TV.",
+        "description": "A Bigscreen Bridge was found at {url}. Enter the pairing code shown on the TV in Bridge Status (for example 7KQ4-MXD2). An existing bridge token also works.",
         "data": {
-          "token": "Pairing token"
+          "code": "Pairing code"
         }
       }
     },
     "error": {
       "cannot_connect": "Cannot connect to the bridge",
-      "invalid_auth": "The bridge rejected the pairing token",
+      "invalid_auth": "The code is wrong or has expired, or the token was rejected",
       "invalid_url": "Enter an http(s) address without a path, query, or credentials",
-      "wrong_device": "This address belongs to a different Bigscreen"
+      "wrong_device": "This address belongs to a different Bigscreen",
+      "too_many_attempts": "Too many pairing attempts; wait a minute and try again"
     },
     "abort": {
       "already_configured": "This Bigscreen is already configured",
-      "reauth_successful": "Pairing token updated",
+      "reauth_successful": "Paired again",
       "not_supported": "This bridge announces an unsupported protocol"
     },
     "flow_title": "{name}"
