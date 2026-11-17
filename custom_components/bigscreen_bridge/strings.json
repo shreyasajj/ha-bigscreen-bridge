@@ -1,0 +1,41 @@
+{
+  "title": "Bigscreen Bridge",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect your Bigscreen",
+        "description": "Enter the bridge address, for example http://tv.local:8765, and its private pairing token.",
+        "data": {
+          "url": "Bridge URL",
+          "token": "Pairing token"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Update pairing token",
+        "description": "Enter the current token for this bridge.",
+        "data": {
+          "token": "Pairing token"
+        }
+      },
+      "pair": {
+        "title": "Pair with {name}",
+        "description": "A Bigscreen Bridge was found at {url}. Enter its private pairing token from ~/.config/bigscreen-bridge/config.json on the TV.",
+        "data": {
+          "token": "Pairing token"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to the bridge",
+      "invalid_auth": "The bridge rejected the pairing token",
+      "invalid_url": "Enter an http(s) address without a path, query, or credentials",
+      "wrong_device": "This address belongs to a different Bigscreen"
+    },
+    "abort": {
+      "already_configured": "This Bigscreen is already configured",
+      "reauth_successful": "Pairing token updated",
+      "not_supported": "This bridge announces an unsupported protocol"
+    },
+    "flow_title": "{name}"
+  }
+}
