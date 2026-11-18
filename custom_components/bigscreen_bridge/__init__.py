@@ -3,7 +3,8 @@ from homeassistant.const import Platform
 
 from .coordinator import BridgeCoordinator
 
-PLATFORMS = [Platform.MEDIA_PLAYER]
+PLATFORMS = [Platform.MEDIA_PLAYER, Platform.SENSOR, Platform.BINARY_SENSOR, Platform.SWITCH, Platform.LIGHT,
+             Platform.SCENE]
 
 
 async def async_setup_entry(hass, entry):

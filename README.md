@@ -27,6 +27,35 @@ the bridge running on the TV this integration has nothing to connect to.
   without it, Couchside is navigation only. The TV player's volume stays the TV's
   system volume.
 
+## Bridge status and LED lights
+
+The TV device also gets these entities.
+
+**Under Diagnostic:**
+- **Bridge version**, **Bridge started**, **Bridge health**
+- **Connected clients**, **Discovery**, **MQTT**
+- **Display**, **Volume**, **Focused app**
+- **Windows**, **Warnings** (with the latest message)
+
+The bridge's status is polled every 30 s, while the display, volume and focused app
+update as soon as the bridge pushes them. **Download diagnostics** returns the
+bridge's full report, without the token.
+
+**When LedFx or HyperHDR runs on the TV** (bridge 0.2.0 or later):
+- **LedFx:**
+  - a light per virtual: on/off, brightness, RGB colour, and its effects;
+  - a **LedFx** switch: playing or paused;
+  - a scene per LedFx scene;
+  - **LedFx service** and **LedFx devices online**.
+- **HyperHDR:**
+  - a light per instance: on means running; RGB colour and effects override the
+    video, and the effect **Video** returns to it; brightness is the output scale;
+  - **HyperHDR service**, **HyperHDR output** and **HyperHDR grabber** (with the last
+    error).
+
+New LedFx virtuals, scenes or HyperHDR instances appear after reloading the
+integration.
+
 ## Install
 
 1. In HACS open the menu, choose **Custom repositories**, add
@@ -78,7 +107,7 @@ data:
 
 ## Status
 
-Version 0.3.1. Its automated tests run against Home Assistant 2026.11.2; pairing
+Version 0.4.0. Its automated tests run against Home Assistant 2026.11.2; pairing
 with a code was also tested against the bridge on a real TV, but not yet from a
 running Home Assistant. Version 0.2.1 was also tested in a temporary Home Assistant
 instance against a real TV. The minimum version in
