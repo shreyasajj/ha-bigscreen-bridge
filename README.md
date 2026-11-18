@@ -72,8 +72,10 @@ data:
 
 ## Status
 
-Version 0.2.1. Tested with Home Assistant 2026.2.3 through automated tests and a
-temporary Home Assistant instance against a real TV. The minimum version in
+Version 0.3.0. Its automated tests run against Home Assistant 2026.11.2; pairing
+with a code was also tested against the bridge on a real TV, but not yet from a
+running Home Assistant. Version 0.2.1 was also tested in a temporary Home Assistant
+instance against a real TV. The minimum version in
 `hacs.json` (2024.11) is the oldest release that has the APIs used; it has not been
 tested there.
 
