@@ -1,6 +1,7 @@
 """Small aiohttp protocol client, independent of Home Assistant internals."""
 import asyncio
 import contextlib
+import re
 import uuid
 from urllib.parse import urlsplit
 
@@ -18,6 +19,32 @@ class BridgeClientError(Exception):
 
 class BridgeAuthError(BridgeClientError):
     pass
+
+
+PAIRING_CODE = re.compile(r"[23456789ABCDEFGHJKMNPQRSTVWXYZ]{8}")
+
+
+def pairing_code(value):
+    """The 8-character code shown on the TV, or None when `value` is something else (a token)."""
+    code = re.sub(r"[\s-]", "", value or "").upper()
+    return code if PAIRING_CODE.fullmatch(code) else None
+
+
+async def pair(session, url, code, name="Home Assistant"):
+    """Exchange the code shown on the TV for this client's own token."""
+    url = validate_url(url)
+    async with asyncio.timeout(10):
+        async with session.post(url + "/pair", json={"code": code, "name": name}) as response:
+            try:
+                body = await response.json(content_type=None)
+            except ValueError as exc:
+                raise BridgeClientError("Unexpected pairing reply") from exc
+    if response.status == 200 and isinstance(body, dict) and isinstance(body.get("token"), str):
+        return body
+    error = (body.get("error") or {}) if isinstance(body, dict) else {}
+    if response.status in (403, 429):
+        raise BridgeAuthError(error.get("message") or "Pairing was refused", error.get("code"))
+    raise BridgeClientError(error.get("message") or "Pairing failed", error.get("code"))
 
 
 def validate_url(value):
