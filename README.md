@@ -36,8 +36,17 @@ the bridge running on the TV this integration has nothing to connect to.
    token from `~/.config/bigscreen-bridge/config.json` is still accepted in the same
    field.
 
+HACS shows an update in Home Assistant whenever a new release is published here.
+
 Discovery uses mDNS, which does not cross VLANs. If Home Assistant and the TV are on
 different subnets, enter the address by hand.
+
+## Releases
+
+Push a tag `vX.Y.Z` equal to `version` in `custom_components/bigscreen_bridge/manifest.json`.
+hassfest and HACS validation run, then a GitHub release is published with generated
+notes. A tag such as `v0.3.0rc1` or `v0.3.0b1` makes a pre-release, which HACS shows
+only to those who turned on beta versions for this repository.
 
 ## Typed media IDs
 

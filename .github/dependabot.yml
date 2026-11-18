@@ -1,0 +1,7 @@
+version: 2
+# The integration has no Python requirements; only the workflow actions update.
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
