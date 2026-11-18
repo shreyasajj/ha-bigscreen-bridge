@@ -18,8 +18,14 @@ the bridge running on the TV this integration has nothing to connect to.
   controls the app reports.
 - Media browsing for Flimmer channels, the Music Assistant library shown in
   Couchside, and Stremio's stored library.
-- Couchside is navigation only. Music playback stays with the Music Assistant
-  integration, so no duplicate music player is created.
+- Couchside has no player of its own: Music Assistant owns its playback. While
+  Couchside is the active app, the TV player passes play, pause, stop, next,
+  previous and seek to the Music Assistant player for this TV, and shows its title,
+  artist, album, artwork and position. Picking a track, album, artist or playlist
+  plays it through Music Assistant and opens Couchside's Now Playing. This needs the
+  [Music Assistant integration](https://www.home-assistant.io/integrations/music_assistant/);
+  without it, Couchside is navigation only. The TV player's volume stays the TV's
+  system volume.
 
 ## Install
 
@@ -58,7 +64,7 @@ only to those who turned on beta versions for this repository.
 | `stremio_episode` | JSON: `{"series_id": "...", "video_id": "..."}` |
 | `flimmer_channel` | channel ID from media browsing |
 | `couchside_now_playing`, `couchside_search` | empty, search text |
-| `couchside_track`, `couchside_album`, `couchside_artist`, `couchside_playlist` | Music Assistant URI |
+| `couchside_track`, `couchside_album`, `couchside_artist`, `couchside_playlist` | Music Assistant URI (plays through Music Assistant when its integration has this TV's player; otherwise opens the page) |
 | `bigscreen_uri` | a `bigscreen://` deep link |
 
 ```yaml
@@ -72,7 +78,7 @@ data:
 
 ## Status
 
-Version 0.3.0. Its automated tests run against Home Assistant 2026.11.2; pairing
+Version 0.3.1. Its automated tests run against Home Assistant 2026.11.2; pairing
 with a code was also tested against the bridge on a real TV, but not yet from a
 running Home Assistant. Version 0.2.1 was also tested in a temporary Home Assistant
 instance against a real TV. The minimum version in

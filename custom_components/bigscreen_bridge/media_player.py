@@ -6,7 +6,10 @@ from homeassistant.util import dt as dt_util
 from homeassistant.components.media_player import (
     BrowseMedia, MediaPlayerEntity, MediaPlayerEntityFeature, MediaPlayerState, MediaType,
 )
+from homeassistant.const import EVENT_STATE_CHANGED, STATE_UNAVAILABLE, STATE_UNKNOWN
+from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -16,6 +19,20 @@ from .const import DOMAIN
 _BROWSE_ID = re.compile(r"(couchside|stremio|flimmer)(?:/([a-z_]{1,32}))?(?::([0-9]{1,7}))?")
 _MEDIA_CLASSES = {"channel": "channel", "movie": "movie", "series": "tv_show", "album": "album",
                   "artist": "artist", "playlist": "playlist", "track": "track"}
+
+
+# Playback controls a Music Assistant player offers that the Couchside view passes on to it.
+_FORWARDED = (MediaPlayerEntityFeature.PLAY | MediaPlayerEntityFeature.PAUSE | MediaPlayerEntityFeature.STOP
+              | MediaPlayerEntityFeature.NEXT_TRACK | MediaPlayerEntityFeature.PREVIOUS_TRACK
+              | MediaPlayerEntityFeature.SEEK)
+_MUSIC_SERVICES = {"play": "media_play", "pause": "media_pause", "stop": "media_stop", "seek": "media_seek",
+                   "next": "media_next_track", "previous": "media_previous_track"}
+_PLAYABLE_MUSIC = ("couchside_track", "couchside_album", "couchside_artist", "couchside_playlist")
+
+
+def music_assistant_entity_id(hass, player_id):
+    """Home Assistant's Music Assistant integration registers each player under its MA player ID."""
+    return er.async_get(hass).async_get_entity_id("media_player", "music_assistant", player_id)
 
 
 def _browsable(app):
@@ -63,6 +80,40 @@ class BigscreenPlayer(CoordinatorEntity, MediaPlayerEntity):
     def _media(self):
         return self._application.get("media", {}) if self._target in ("stremio", "flimmer", "vacuumtube") else {}
 
+    def _couchside_music(self):
+        """The Music Assistant player that owns Couchside's playback, if Home Assistant has it and it works."""
+        if self._app_id or self.hass is None:
+            return None
+        couchside = next((a for a in self.coordinator.data["apps"] if a["id"] == "couchside"), {})
+        player_id = couchside.get("ma_player_id")
+        entity_id = player_id and music_assistant_entity_id(self.hass, player_id)
+        state = entity_id and self.hass.states.get(entity_id)
+        if not state or state.state in (STATE_UNAVAILABLE, STATE_UNKNOWN):
+            return None
+        return state
+
+    @property
+    def _music(self):
+        """Couchside's Music Assistant player while the main player shows Couchside."""
+        return self._couchside_music() if self._target == "couchside" else None
+
+    async def async_added_to_hass(self):
+        await super().async_added_to_hass()
+        if self._app_id:
+            return
+
+        @callback
+        def relevant(event_data):
+            music = self._music
+            return music is not None and event_data.get("entity_id") == music.entity_id
+
+        @callback
+        def changed(_event):
+            self.async_write_ha_state()
+
+        # Music Assistant's player changes on its own; show those changes here at once.
+        self.async_on_remove(self.hass.bus.async_listen(EVENT_STATE_CHANGED, changed, event_filter=relevant))
+
     @property
     def available(self):
         available = super().available and self.coordinator.data.get("available", True)
@@ -102,12 +153,16 @@ class BigscreenPlayer(CoordinatorEntity, MediaPlayerEntity):
                     continue
                 if command in capabilities:
                     flags |= feature
+        if music := self._music:
+            flags |= MediaPlayerEntityFeature(int(music.attributes.get("supported_features", 0))) & _FORWARDED
         return flags
 
     @property
     def state(self):
         if (self._power.get("display") or {}).get("display_on") is False:
             return MediaPlayerState.OFF
+        if music := self._music:
+            return MediaPlayerState(music.state) if music.state in set(MediaPlayerState) else MediaPlayerState.IDLE
         if self._media.get("state") == "buffering":
             return MediaPlayerState.BUFFERING
         if self._media.get("state") in ("playing", "paused"):
@@ -118,10 +173,27 @@ class BigscreenPlayer(CoordinatorEntity, MediaPlayerEntity):
 
     @property
     def media_title(self):
+        if music := self._music:
+            return music.attributes.get("media_title")
         if self._target == "flimmer":
             channel = self._media.get("channel", {})
             return channel.get("current", {}).get("title") or channel.get("name") or None
         return self._media.get("title") or None
+
+    @property
+    def media_artist(self):
+        return music.attributes.get("media_artist") if (music := self._music) else None
+
+    @property
+    def media_album_name(self):
+        return music.attributes.get("media_album_name") if (music := self._music) else None
+
+    @property
+    def entity_picture(self):
+        """Couchside's artwork is Music Assistant's: reuse its image proxy."""
+        if (music := self._music) and music.attributes.get("entity_picture"):
+            return music.attributes["entity_picture"]
+        return super().entity_picture
 
     @property
     def media_channel(self):
@@ -141,14 +213,20 @@ class BigscreenPlayer(CoordinatorEntity, MediaPlayerEntity):
 
     @property
     def media_position(self):
+        if music := self._music:
+            return music.attributes.get("media_position")
         return self._media.get("position")
 
     @property
     def media_duration(self):
+        if music := self._music:
+            return music.attributes.get("media_duration")
         return self._media.get("duration")
 
     @property
     def media_position_updated_at(self):
+        if music := self._music:
+            return music.attributes.get("media_position_updated_at")
         value = self._media.get("updated_at")
         return dt_util.parse_datetime(value) if value else None
 
@@ -160,6 +238,8 @@ class BigscreenPlayer(CoordinatorEntity, MediaPlayerEntity):
 
     @property
     def media_content_type(self):
+        if self._music:
+            return MediaType.MUSIC
         if self._target == "flimmer" and self.media_content_id:
             return "channel"
         return {"series": "tvshow", "movie": "movie", "video": "video"}.get(self._media.get("type"))
@@ -192,7 +272,17 @@ class BigscreenPlayer(CoordinatorEntity, MediaPlayerEntity):
             raise HomeAssistantError("Turn off the display on the main Bigscreen player")
         await self.coordinator.command("screen_off")
 
+    async def _forward(self, music, service, **data):
+        await self.hass.services.async_call("media_player", service, {"entity_id": music.entity_id, **data},
+                                            blocking=True)
+
     async def _player_command(self, command, **kwargs):
+        if music := self._music:
+            data = {"seek_position": kwargs["position"]} if command == "seek" else {}
+            await self._forward(music, _MUSIC_SERVICES[command], **data)
+            return
+        if command in ("next", "previous"):
+            raise HomeAssistantError("Only Couchside, through Music Assistant, has next and previous track")
         if self._target not in ("stremio", "flimmer", "vacuumtube"):
             raise HomeAssistantError("The active app does not support playback control")
         await self.coordinator.command(command, app=self._target, **kwargs)
@@ -205,6 +295,12 @@ class BigscreenPlayer(CoordinatorEntity, MediaPlayerEntity):
 
     async def async_media_stop(self):
         await self._player_command("stop")
+
+    async def async_media_next_track(self):
+        await self._player_command("next")
+
+    async def async_media_previous_track(self):
+        await self._player_command("previous")
 
     async def async_media_seek(self, position):
         await self._player_command("seek", position=position)
@@ -241,6 +337,7 @@ class BigscreenPlayer(CoordinatorEntity, MediaPlayerEntity):
                 "flimmer_channel": self._media.get("channel") if self._target == "flimmer" else None,
                 "couchside_content_types": music.get("content_types", []),
                 "music_assistant_player_id": music.get("ma_player_id"),
+                "music_assistant_entity_id": (state := self._couchside_music()) and state.entity_id,
                 "couchside_playback_owner": music.get("playback_owner")}
 
     async def async_select_source(self, source):
@@ -296,6 +393,12 @@ class BigscreenPlayer(CoordinatorEntity, MediaPlayerEntity):
             app = next((a for a in self.coordinator.data["apps"] if a["id"] == "couchside"), {})
             if media_type not in app.get("content_types", []):
                 raise HomeAssistantError("Couchside does not advertise this navigation capability")
+            if media_type in _PLAYABLE_MUSIC and (music := self._couchside_music()):
+                # Play it through Music Assistant, then show it playing.
+                await self._forward(music, "play_media", media_content_id=media_id, media_content_type="music")
+                if "couchside_now_playing" in app.get("content_types", []):
+                    await self.coordinator.command("open", app="couchside", content_type="now_playing", content_id="")
+                return
             await self.coordinator.command("open", app="couchside",
                                            content_type=media_type.removeprefix("couchside_"),
                                            content_id=media_id)
