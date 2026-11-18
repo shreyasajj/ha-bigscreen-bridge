@@ -68,3 +68,7 @@ tested there.
 The token is a bearer secret for full control of the TV's apps, volume and display.
 The connection is plain WebSocket unless you put the bridge behind TLS, so use it on
 a trusted network only.
+
+## License
+
+MIT, see [LICENSE](LICENSE).
