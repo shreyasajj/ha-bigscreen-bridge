@@ -1,0 +1,46 @@
+name: Release
+
+# A pushed tag vX.Y.Z publishes a GitHub release, which HACS offers as an update.
+# The tag must equal manifest.json's version; a tag with an rc/b suffix is a pre-release.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+jobs:
+  hassfest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: home-assistant/actions/hassfest@master
+
+  hacs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: hacs/action@main
+        with:
+          category: integration
+          # No entry in home-assistant/brands yet.
+          ignore: brands
+
+  publish:
+    needs: [hassfest, hacs]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tag matches manifest.json
+        run: |
+          version=$(jq -r .version custom_components/bigscreen_bridge/manifest.json)
+          [ "v$version" = "$GITHUB_REF_NAME" ] \
+            || { echo "Tag $GITHUB_REF_NAME does not match manifest.json version $version"; exit 1; }
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -- --title "Bigscreen Bridge integration ${GITHUB_REF_NAME#v}" --generate-notes
+          case "$GITHUB_REF_NAME" in *rc*|*b[0-9]*) set -- "$@" --prerelease ;; esac
+          gh release create "$GITHUB_REF_NAME" "$@"
