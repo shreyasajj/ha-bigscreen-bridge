@@ -1,4 +1,5 @@
 """Small aiohttp protocol client, independent of Home Assistant internals."""
+
 import asyncio
 import contextlib
 import re
@@ -7,14 +8,13 @@ from urllib.parse import urlsplit
 
 import aiohttp
 
-
 COMMAND_TIMEOUT = 100
 
 
 class BridgeClientError(Exception):
     def __init__(self, message, code=None):
         super().__init__(message)
-        self.code = code    # the bridge's machine-readable error code, when it sent one
+        self.code = code  # the bridge's machine-readable error code, when it sent one
 
 
 class BridgeAuthError(BridgeClientError):
@@ -49,8 +49,15 @@ async def pair(session, url, code, name="Home Assistant"):
 
 def validate_url(value):
     parsed = urlsplit(value)
-    if (parsed.scheme not in ("http", "https") or not parsed.hostname or parsed.username
-            or parsed.password or parsed.query or parsed.fragment or parsed.path not in ("", "/")):
+    if (
+        parsed.scheme not in ("http", "https")
+        or not parsed.hostname
+        or parsed.username
+        or parsed.password
+        or parsed.query
+        or parsed.fragment
+        or parsed.path not in ("", "/")
+    ):
         raise ValueError("Use an http(s) bridge address without credentials, path, or query")
     _ = parsed.port  # validate malformed/out-of-range ports
     return value.rstrip("/")
@@ -72,18 +79,25 @@ class BridgeClient:
         try:
             async with asyncio.timeout(10):
                 self.ws = await self.session.ws_connect(
-                    self.url + "/ws", headers={"Authorization": "Bearer " + self.token},
-                    heartbeat=20, max_msg_size=1024 * 1024,
-                    timeout=aiohttp.ClientWSTimeout(ws_close=5))
+                    self.url + "/ws",
+                    headers={"Authorization": "Bearer " + self.token},
+                    heartbeat=20,
+                    max_msg_size=1024 * 1024,
+                    timeout=aiohttp.ClientWSTimeout(ws_close=5),
+                )
         except aiohttp.WSServerHandshakeError as exc:
             if exc.status == 401:
                 raise BridgeAuthError("Bridge rejected the token") from exc
             raise BridgeClientError("Bridge handshake failed") from exc
         try:
             initial = await asyncio.wait_for(self.ws.receive_json(), 10)
-            if (not isinstance(initial, dict) or initial.get("type") != "state"
-                    or initial.get("protocol") != 1 or not isinstance(initial.get("device_id"), str)
-                    or not isinstance(initial.get("apps"), list)):
+            if (
+                not isinstance(initial, dict)
+                or initial.get("type") != "state"
+                or initial.get("protocol") != 1
+                or not isinstance(initial.get("device_id"), str)
+                or not isinstance(initial.get("apps"), list)
+            ):
                 raise BridgeClientError("Unsupported bridge protocol")
             self.state = initial
         except BaseException:

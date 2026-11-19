@@ -1,12 +1,18 @@
 """LedFx virtuals and HyperHDR instances as lights, controlled through the bridge."""
+
 from homeassistant.components.light import (
-    ATTR_BRIGHTNESS, ATTR_EFFECT, ATTR_RGB_COLOR, ColorMode, LightEntity, LightEntityFeature,
+    ATTR_BRIGHTNESS,
+    ATTR_EFFECT,
+    ATTR_RGB_COLOR,
+    ColorMode,
+    LightEntity,
+    LightEntityFeature,
 )
 from homeassistant.exceptions import HomeAssistantError
 
 from .entity import BridgeEntity, light_sections
 
-VIDEO = "Video"   # HyperHDR: back to the captured video
+VIDEO = "Video"  # HyperHDR: back to the captured video
 
 
 def _level(kwargs):
@@ -14,13 +20,13 @@ def _level(kwargs):
 
 
 class LedFxLight(BridgeEntity, LightEntity):
-    _attr_supported_color_modes = {ColorMode.RGB}
     _attr_color_mode = ColorMode.RGB
     _attr_supported_features = LightEntityFeature.EFFECT
     _attr_icon = "mdi:led-strip-variant"
 
     def __init__(self, coordinator, virtual):
         super().__init__(coordinator, f"ledfx_{virtual['id']}", f"LedFx {virtual['name']}")
+        self._attr_supported_color_modes = {ColorMode.RGB}
         self.virtual_id = virtual["id"]
 
     @property
@@ -43,7 +49,7 @@ class LedFxLight(BridgeEntity, LightEntity):
     @property
     def rgb_color(self):
         color = (self._virtual or {}).get("color")
-        return tuple(int(color[i:i + 2], 16) for i in (1, 3, 5)) if color else None
+        return tuple(int(color[i : i + 2], 16) for i in (1, 3, 5)) if color else None
 
     @property
     def effect(self):
@@ -56,15 +62,21 @@ class LedFxLight(BridgeEntity, LightEntity):
     async def async_turn_on(self, **kwargs):
         request = {"virtual": self.virtual_id, "on": True}
         if ATTR_EFFECT in kwargs:
-            kind = next((e["type"] for e in self.lights("ledfx").get("effects", []) if e["name"] == kwargs[ATTR_EFFECT]),
-                        None)
+            kind = next(
+                (
+                    e["type"]
+                    for e in self.lights("ledfx").get("effects", [])
+                    if e["name"] == kwargs[ATTR_EFFECT]
+                ),
+                None,
+            )
             if kind is None:
                 raise HomeAssistantError("Unknown LedFx effect")
             request["effect"] = kind
         if (level := _level(kwargs)) is not None:
             request["brightness"] = level
         if ATTR_RGB_COLOR in kwargs:
-            request["color"] = "#%02x%02x%02x" % tuple(kwargs[ATTR_RGB_COLOR])
+            request["color"] = "#{:02x}{:02x}{:02x}".format(*kwargs[ATTR_RGB_COLOR])
         await self.coordinator.command("ledfx_light", **request)
 
     async def async_turn_off(self, **kwargs):
@@ -73,7 +85,7 @@ class LedFxLight(BridgeEntity, LightEntity):
 
 class HyperHdrLight(BridgeEntity, LightEntity):
     """One HyperHDR instance: on means running. Colour and effects override the video until `Video`."""
-    _attr_supported_color_modes = {ColorMode.RGB}
+
     _attr_color_mode = ColorMode.RGB
     _attr_supported_features = LightEntityFeature.EFFECT
     _attr_assumed_state = True
@@ -81,15 +93,22 @@ class HyperHdrLight(BridgeEntity, LightEntity):
 
     def __init__(self, coordinator, instance):
         super().__init__(coordinator, f"hyperhdr_{instance['id']}", f"HyperHDR {instance['name']}")
+        self._attr_supported_color_modes = {ColorMode.RGB}
         self.instance_id = instance["id"]
 
     @property
     def _instance(self):
-        return next((i for i in self.lights("hyperhdr").get("instances", []) if i["id"] == self.instance_id), None)
+        return next(
+            (i for i in self.lights("hyperhdr").get("instances", []) if i["id"] == self.instance_id), None
+        )
 
     @property
     def available(self):
-        return super().available and bool(self.lights("hyperhdr").get("available")) and self._instance is not None
+        return (
+            super().available
+            and bool(self.lights("hyperhdr").get("available"))
+            and self._instance is not None
+        )
 
     @property
     def is_on(self):

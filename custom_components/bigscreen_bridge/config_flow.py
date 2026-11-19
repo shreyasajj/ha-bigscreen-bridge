@@ -1,4 +1,5 @@
 """Connect to an authenticated bridge using the UI."""
+
 import aiohttp
 import voluptuous as vol
 from homeassistant import config_entries
@@ -7,7 +8,6 @@ from homeassistant.helpers.selector import TextSelector, TextSelectorConfig, Tex
 
 from .client import BridgeAuthError, BridgeClient, BridgeClientError, pair, pairing_code, validate_url
 from .const import DOMAIN
-
 
 CODE_FIELD = TextSelector(TextSelectorConfig(type=TextSelectorType.TEXT))
 
@@ -58,8 +58,9 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 if state["device_id"] != self.unique_id:
                     errors["base"] = "wrong_device"
                 else:
-                    return self.async_create_entry(title=state["name"],
-                                                   data={"url": self._found["url"], "token": token})
+                    return self.async_create_entry(
+                        title=state["name"], data={"url": self._found["url"], "token": token}
+                    )
             except BridgeClientError as exc:
                 errors["base"] = failure(exc)
             except (aiohttp.ClientError, TimeoutError, ValueError):
@@ -67,8 +68,12 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             finally:
                 if client:
                     await client.close()
-        return self.async_show_form(step_id="pair", data_schema=vol.Schema({vol.Required("code"): CODE_FIELD}),
-                                    errors=errors, description_placeholders=self._found)
+        return self.async_show_form(
+            step_id="pair",
+            data_schema=vol.Schema({vol.Required("code"): CODE_FIELD}),
+            errors=errors,
+            description_placeholders=self._found,
+        )
 
     async def async_step_user(self, user_input=None):
         errors = {}
@@ -91,10 +96,17 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             finally:
                 if client:
                     await client.close()
-        return self.async_show_form(step_id="user", data_schema=vol.Schema({
-            vol.Required("url"): str,
-            vol.Required("code"): CODE_FIELD,
-        }), errors=errors, description_placeholders={"example": "http://tv.local:8765"})
+        return self.async_show_form(
+            step_id="user",
+            data_schema=vol.Schema(
+                {
+                    vol.Required("url"): str,
+                    vol.Required("code"): CODE_FIELD,
+                }
+            ),
+            errors=errors,
+            description_placeholders={"example": "http://tv.local:8765"},
+        )
 
     async def async_step_reauth(self, entry_data):
         return await self.async_step_reauth_confirm()
@@ -119,5 +131,8 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             finally:
                 if client:
                     await client.close()
-        return self.async_show_form(step_id="reauth_confirm",
-                                    data_schema=vol.Schema({vol.Required("code"): CODE_FIELD}), errors=errors)
+        return self.async_show_form(
+            step_id="reauth_confirm",
+            data_schema=vol.Schema({vol.Required("code"): CODE_FIELD}),
+            errors=errors,
+        )

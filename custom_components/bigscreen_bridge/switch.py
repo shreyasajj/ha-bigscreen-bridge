@@ -1,4 +1,5 @@
 """LedFx playing or paused, through the bridge."""
+
 from homeassistant.components.switch import SwitchEntity
 
 from .entity import BridgeEntity, light_sections

@@ -1,10 +1,16 @@
 """Entities on the TV's device that read the bridge's snapshot or diagnostics."""
+
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import DOMAIN
 
-APP_NAMES = {"couchside": "Couchside", "stremio": "Stremio TV", "flimmer": "Flimmer", "vacuumtube": "VacuumTube"}
+APP_NAMES = {
+    "couchside": "Couchside",
+    "stremio": "Stremio TV",
+    "flimmer": "Flimmer",
+    "vacuumtube": "VacuumTube",
+}
 
 
 class BridgeEntity(CoordinatorEntity):
@@ -16,8 +22,12 @@ class BridgeEntity(CoordinatorEntity):
         self._attr_name = name
         device_id = coordinator.data["device_id"]
         self._attr_unique_id = f"{device_id}_{key}"
-        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, device_id)}, name=coordinator.data["name"],
-                                            manufacturer="KDE", model="Plasma Bigscreen")
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, device_id)},
+            name=coordinator.data["name"],
+            manufacturer="KDE",
+            model="Plasma Bigscreen",
+        )
 
     @property
     def diagnostics(self):
