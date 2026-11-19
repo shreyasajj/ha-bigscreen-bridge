@@ -7,6 +7,19 @@ on:
     - cron: "0 4 * * 1"
 
 jobs:
+  lint:
+    # Required to merge into main. Ruff is pinned so a new release can't turn the
+    # check red on its own; the rules are in ruff.toml.
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - run: pip install ruff==0.17.5
+      - run: ruff check --output-format github custom_components
+
   hassfest:
     runs-on: ubuntu-latest
     steps:

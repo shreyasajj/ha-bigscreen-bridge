@@ -7,7 +7,6 @@ from urllib.parse import urlsplit
 
 import aiohttp
 
-
 COMMAND_TIMEOUT = 100
 
 

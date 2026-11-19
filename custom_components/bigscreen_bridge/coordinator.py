@@ -1,6 +1,6 @@
 """Push updates with periodic reconnect and identity verification."""
-from datetime import timedelta
 import time
+from datetime import timedelta
 
 import aiohttp
 from homeassistant.exceptions import ConfigEntryAuthFailed, HomeAssistantError
@@ -9,7 +9,6 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 from .client import BridgeAuthError, BridgeClient, BridgeClientError
 from .const import DOMAIN
-
 
 DIAGNOSTICS_INTERVAL = 30   # seconds between reads of the bridge's diagnostics
 

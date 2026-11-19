@@ -8,7 +8,6 @@ from homeassistant.helpers.selector import TextSelector, TextSelectorConfig, Tex
 from .client import BridgeAuthError, BridgeClient, BridgeClientError, pair, pairing_code, validate_url
 from .const import DOMAIN
 
-
 CODE_FIELD = TextSelector(TextSelectorConfig(type=TextSelectorType.TEXT))
 
 

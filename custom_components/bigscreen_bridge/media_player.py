@@ -2,9 +2,12 @@
 import json
 import re
 
-from homeassistant.util import dt as dt_util
 from homeassistant.components.media_player import (
-    BrowseMedia, MediaPlayerEntity, MediaPlayerEntityFeature, MediaPlayerState, MediaType,
+    BrowseMedia,
+    MediaPlayerEntity,
+    MediaPlayerEntityFeature,
+    MediaPlayerState,
+    MediaType,
 )
 from homeassistant.const import EVENT_STATE_CHANGED, STATE_UNAVAILABLE, STATE_UNKNOWN
 from homeassistant.core import callback
@@ -12,9 +15,9 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
-
 
 _BROWSE_ID = re.compile(r"(couchside|stremio|flimmer)(?:/([a-z_]{1,32}))?(?::([0-9]{1,7}))?")
 _MEDIA_CLASSES = {"channel": "channel", "movie": "movie", "series": "tv_show", "album": "album",

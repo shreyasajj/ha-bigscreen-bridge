@@ -1,6 +1,11 @@
 """LedFx virtuals and HyperHDR instances as lights, controlled through the bridge."""
 from homeassistant.components.light import (
-    ATTR_BRIGHTNESS, ATTR_EFFECT, ATTR_RGB_COLOR, ColorMode, LightEntity, LightEntityFeature,
+    ATTR_BRIGHTNESS,
+    ATTR_EFFECT,
+    ATTR_RGB_COLOR,
+    ColorMode,
+    LightEntity,
+    LightEntityFeature,
 )
 from homeassistant.exceptions import HomeAssistantError
 
@@ -64,7 +69,7 @@ class LedFxLight(BridgeEntity, LightEntity):
         if (level := _level(kwargs)) is not None:
             request["brightness"] = level
         if ATTR_RGB_COLOR in kwargs:
-            request["color"] = "#%02x%02x%02x" % tuple(kwargs[ATTR_RGB_COLOR])
+            request["color"] = "#{:02x}{:02x}{:02x}".format(*kwargs[ATTR_RGB_COLOR])
         await self.coordinator.command("ledfx_light", **request)
 
     async def async_turn_off(self, **kwargs):
