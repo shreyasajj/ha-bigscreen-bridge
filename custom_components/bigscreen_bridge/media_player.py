@@ -1,4 +1,5 @@
 """Native active-app and dedicated video players with negotiated capabilities."""
+
 import json
 import re
 
@@ -20,16 +21,34 @@ from homeassistant.util import dt as dt_util
 from .const import DOMAIN
 
 _BROWSE_ID = re.compile(r"(couchside|stremio|flimmer)(?:/([a-z_]{1,32}))?(?::([0-9]{1,7}))?")
-_MEDIA_CLASSES = {"channel": "channel", "movie": "movie", "series": "tv_show", "album": "album",
-                  "artist": "artist", "playlist": "playlist", "track": "track"}
+_MEDIA_CLASSES = {
+    "channel": "channel",
+    "movie": "movie",
+    "series": "tv_show",
+    "album": "album",
+    "artist": "artist",
+    "playlist": "playlist",
+    "track": "track",
+}
 
 
 # Playback controls a Music Assistant player offers that the Couchside view passes on to it.
-_FORWARDED = (MediaPlayerEntityFeature.PLAY | MediaPlayerEntityFeature.PAUSE | MediaPlayerEntityFeature.STOP
-              | MediaPlayerEntityFeature.NEXT_TRACK | MediaPlayerEntityFeature.PREVIOUS_TRACK
-              | MediaPlayerEntityFeature.SEEK)
-_MUSIC_SERVICES = {"play": "media_play", "pause": "media_pause", "stop": "media_stop", "seek": "media_seek",
-                   "next": "media_next_track", "previous": "media_previous_track"}
+_FORWARDED = (
+    MediaPlayerEntityFeature.PLAY
+    | MediaPlayerEntityFeature.PAUSE
+    | MediaPlayerEntityFeature.STOP
+    | MediaPlayerEntityFeature.NEXT_TRACK
+    | MediaPlayerEntityFeature.PREVIOUS_TRACK
+    | MediaPlayerEntityFeature.SEEK
+)
+_MUSIC_SERVICES = {
+    "play": "media_play",
+    "pause": "media_pause",
+    "stop": "media_stop",
+    "seek": "media_seek",
+    "next": "media_next_track",
+    "previous": "media_previous_track",
+}
 _PLAYABLE_MUSIC = ("couchside_track", "couchside_album", "couchside_artist", "couchside_playlist")
 
 
@@ -56,9 +75,11 @@ class BigscreenPlayer(CoordinatorEntity, MediaPlayerEntity):
     _attr_has_entity_name = True
     _attr_name = None
     _attr_icon = "mdi:television"
-    _attr_supported_features = (MediaPlayerEntityFeature.SELECT_SOURCE
-                                | MediaPlayerEntityFeature.PLAY_MEDIA
-                                | MediaPlayerEntityFeature.BROWSE_MEDIA)
+    _attr_supported_features = (
+        MediaPlayerEntityFeature.SELECT_SOURCE
+        | MediaPlayerEntityFeature.PLAY_MEDIA
+        | MediaPlayerEntityFeature.BROWSE_MEDIA
+    )
 
     def __init__(self, coordinator, app_id=None):
         super().__init__(coordinator)
@@ -67,9 +88,12 @@ class BigscreenPlayer(CoordinatorEntity, MediaPlayerEntity):
             self._attr_name = {"stremio": "Stremio TV", "flimmer": "Flimmer", "vacuumtube": "YouTube"}[app_id]
         device_id = coordinator.data["device_id"]
         self._attr_unique_id = device_id + ("_" + app_id if app_id else "_active")
-        self._attr_device_info = DeviceInfo(identifiers={(DOMAIN, device_id)},
-                                           name=coordinator.data["name"], manufacturer="KDE",
-                                           model="Plasma Bigscreen")
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, device_id)},
+            name=coordinator.data["name"],
+            manufacturer="KDE",
+            model="Plasma Bigscreen",
+        )
 
     @property
     def _target(self):
@@ -81,10 +105,12 @@ class BigscreenPlayer(CoordinatorEntity, MediaPlayerEntity):
 
     @property
     def _media(self):
-        return self._application.get("media", {}) if self._target in ("stremio", "flimmer", "vacuumtube") else {}
+        return (
+            self._application.get("media", {}) if self._target in ("stremio", "flimmer", "vacuumtube") else {}
+        )
 
     def _couchside_music(self):
-        """The Music Assistant player that owns Couchside's playback, if Home Assistant has it and it works."""
+        """The Music Assistant player that owns Couchside's playback, if Home Assistant has a working one."""
         if self._app_id or self.hass is None:
             return None
         couchside = next((a for a in self.coordinator.data["apps"] if a["id"] == "couchside"), {})
@@ -122,8 +148,12 @@ class BigscreenPlayer(CoordinatorEntity, MediaPlayerEntity):
         available = super().available and self.coordinator.data.get("available", True)
         if self._app_id:
             app = self._application
-            return available and app.get("installed", False) and app.get("hook_installed", False) and (
-                not app.get("running") or app.get("control_available", False))
+            return (
+                available
+                and app.get("installed", False)
+                and app.get("hook_installed", False)
+                and (not app.get("running") or app.get("control_available", False))
+            )
         return available
 
     @property
@@ -137,21 +167,31 @@ class BigscreenPlayer(CoordinatorEntity, MediaPlayerEntity):
 
     @property
     def supported_features(self):
-        flags = (MediaPlayerEntityFeature.PLAY_MEDIA | MediaPlayerEntityFeature.TURN_ON) if self._app_id else self._attr_supported_features
+        flags = (
+            (MediaPlayerEntityFeature.PLAY_MEDIA | MediaPlayerEntityFeature.TURN_ON)
+            if self._app_id
+            else self._attr_supported_features
+        )
         if self._app_id == "flimmer" or (self._app_id and self._application.get("browse")):
             flags |= MediaPlayerEntityFeature.BROWSE_MEDIA
         for capability, source, feature in (
-                ("set_volume", self._audio, MediaPlayerEntityFeature.VOLUME_SET),
-                ("mute", self._audio, MediaPlayerEntityFeature.VOLUME_MUTE),
-                ("screen_on", self._power, MediaPlayerEntityFeature.TURN_ON),
-                ("screen_off", self._power, MediaPlayerEntityFeature.TURN_OFF)):
+            ("set_volume", self._audio, MediaPlayerEntityFeature.VOLUME_SET),
+            ("mute", self._audio, MediaPlayerEntityFeature.VOLUME_MUTE),
+            ("screen_on", self._power, MediaPlayerEntityFeature.TURN_ON),
+            ("screen_off", self._power, MediaPlayerEntityFeature.TURN_OFF),
+        ):
             if capability in source.get("capabilities", []):
                 flags |= feature
         if self._target in ("stremio", "flimmer", "vacuumtube"):
             capabilities = self._application.get("capabilities", [])
-            for command, feature in (("play", MediaPlayerEntityFeature.PLAY), ("pause", MediaPlayerEntityFeature.PAUSE),
-                                     ("stop", MediaPlayerEntityFeature.STOP), ("seek", MediaPlayerEntityFeature.SEEK),
-                                     ("volume_set", MediaPlayerEntityFeature.VOLUME_SET), ("volume_mute", MediaPlayerEntityFeature.VOLUME_MUTE)):
+            for command, feature in (
+                ("play", MediaPlayerEntityFeature.PLAY),
+                ("pause", MediaPlayerEntityFeature.PAUSE),
+                ("stop", MediaPlayerEntityFeature.STOP),
+                ("seek", MediaPlayerEntityFeature.SEEK),
+                ("volume_set", MediaPlayerEntityFeature.VOLUME_SET),
+                ("volume_mute", MediaPlayerEntityFeature.VOLUME_MUTE),
+            ):
                 if command.startswith("volume_") and not self._app_id:
                     continue
                 if command in capabilities:
@@ -165,7 +205,11 @@ class BigscreenPlayer(CoordinatorEntity, MediaPlayerEntity):
         if (self._power.get("display") or {}).get("display_on") is False:
             return MediaPlayerState.OFF
         if music := self._music:
-            return MediaPlayerState(music.state) if music.state in set(MediaPlayerState) else MediaPlayerState.IDLE
+            return (
+                MediaPlayerState(music.state)
+                if music.state in set(MediaPlayerState)
+                else MediaPlayerState.IDLE
+            )
         if self._media.get("state") == "buffering":
             return MediaPlayerState.BUFFERING
         if self._media.get("state") in ("playing", "paused"):
@@ -276,8 +320,9 @@ class BigscreenPlayer(CoordinatorEntity, MediaPlayerEntity):
         await self.coordinator.command("screen_off")
 
     async def _forward(self, music, service, **data):
-        await self.hass.services.async_call("media_player", service, {"entity_id": music.entity_id, **data},
-                                            blocking=True)
+        await self.hass.services.async_call(
+            "media_player", service, {"entity_id": music.entity_id, **data}, blocking=True
+        )
 
     async def _player_command(self, command, **kwargs):
         if music := self._music:
@@ -330,24 +375,31 @@ class BigscreenPlayer(CoordinatorEntity, MediaPlayerEntity):
     def source(self):
         if self._app_id:
             return self._application.get("name")
-        return next((a["name"] for a in self.coordinator.data["apps"]
-                     if a["id"] == self.coordinator.data.get("active_app")), None)
+        return next(
+            (
+                a["name"]
+                for a in self.coordinator.data["apps"]
+                if a["id"] == self.coordinator.data.get("active_app")
+            ),
+            None,
+        )
 
     @property
     def extra_state_attributes(self):
         music = next((a for a in self.coordinator.data["apps"] if a["id"] == "couchside"), {})
-        return {"youtube_view": self._application.get("view") if self._target == "vacuumtube" else None,
-                "flimmer_channel": self._media.get("channel") if self._target == "flimmer" else None,
-                "couchside_content_types": music.get("content_types", []),
-                "music_assistant_player_id": music.get("ma_player_id"),
-                "music_assistant_entity_id": (state := self._couchside_music()) and state.entity_id,
-                "couchside_playback_owner": music.get("playback_owner")}
+        return {
+            "youtube_view": self._application.get("view") if self._target == "vacuumtube" else None,
+            "flimmer_channel": self._media.get("channel") if self._target == "flimmer" else None,
+            "couchside_content_types": music.get("content_types", []),
+            "music_assistant_player_id": music.get("ma_player_id"),
+            "music_assistant_entity_id": (state := self._couchside_music()) and state.entity_id,
+            "couchside_playback_owner": music.get("playback_owner"),
+        }
 
     async def async_select_source(self, source):
         if self._app_id:
             raise HomeAssistantError("Select sources on the main Bigscreen player")
-        app = next((a for a in self.coordinator.data["apps"]
-                    if a["name"] == source and a["installed"]), None)
+        app = next((a for a in self.coordinator.data["apps"] if a["name"] == source and a["installed"]), None)
         if not app:
             raise HomeAssistantError("Unknown or uninstalled source")
         await self.coordinator.command("focus", app=app["id"])
@@ -367,8 +419,12 @@ class BigscreenPlayer(CoordinatorEntity, MediaPlayerEntity):
             app = next((a for a in self.coordinator.data["apps"] if a["id"] == "vacuumtube"), {})
             if media_type not in app.get("content_types", []):
                 raise HomeAssistantError("VacuumTube does not advertise this navigation capability")
-            await self.coordinator.command("open", app="vacuumtube", content_type=media_type.removeprefix("youtube_"),
-                                           content_id=media_id)
+            await self.coordinator.command(
+                "open",
+                app="vacuumtube",
+                content_type=media_type.removeprefix("youtube_"),
+                content_id=media_id,
+            )
             return
         if media_type == "flimmer_channel":
             app = next((a for a in self.coordinator.data["apps"] if a["id"] == "flimmer"), {})
@@ -387,8 +443,13 @@ class BigscreenPlayer(CoordinatorEntity, MediaPlayerEntity):
                 except (ValueError, TypeError) as exc:
                     raise HomeAssistantError("Episode ID must be JSON with series_id and video_id") from exc
             extra = kwargs.get("extra") or {}
-            await self.coordinator.command("open", app="stremio", content_type=media_type.removeprefix("stremio_"),
-                                           content_id=content_id, resume=extra.get("resume", False))
+            await self.coordinator.command(
+                "open",
+                app="stremio",
+                content_type=media_type.removeprefix("stremio_"),
+                content_id=content_id,
+                resume=extra.get("resume", False),
+            )
             return
         if self._app_id and (media_type != "app" or media_id != self._app_id):
             raise HomeAssistantError("Unsupported media type for this app player")
@@ -398,43 +459,66 @@ class BigscreenPlayer(CoordinatorEntity, MediaPlayerEntity):
                 raise HomeAssistantError("Couchside does not advertise this navigation capability")
             if media_type in _PLAYABLE_MUSIC and (music := self._couchside_music()):
                 # Play it through Music Assistant, then show it playing.
-                await self._forward(music, "play_media", media_content_id=media_id, media_content_type="music")
+                await self._forward(
+                    music, "play_media", media_content_id=media_id, media_content_type="music"
+                )
                 if "couchside_now_playing" in app.get("content_types", []):
-                    await self.coordinator.command("open", app="couchside", content_type="now_playing", content_id="")
+                    await self.coordinator.command(
+                        "open", app="couchside", content_type="now_playing", content_id=""
+                    )
                 return
-            await self.coordinator.command("open", app="couchside",
-                                           content_type=media_type.removeprefix("couchside_"),
-                                           content_id=media_id)
+            await self.coordinator.command(
+                "open",
+                app="couchside",
+                content_type=media_type.removeprefix("couchside_"),
+                content_id=media_id,
+            )
             return
         if media_type != "app":
             raise HomeAssistantError("Unsupported media content type")
-        app = next((a for a in self.coordinator.data["apps"]
-                    if a["id"] == media_id and a["installed"]), None)
+        app = next((a for a in self.coordinator.data["apps"] if a["id"] == media_id and a["installed"]), None)
         if not app:
             raise HomeAssistantError("Unknown or uninstalled app")
         await self.coordinator.command("focus", app=app["id"])
 
     async def async_browse_media(self, media_content_type=None, media_content_id=None):
         apps = {a["id"]: a for a in self.coordinator.data["apps"]}
-        if media_content_id in (None, "", "apps") and self._app_id and (
-                self._app_id == "flimmer" or apps.get(self._app_id, {}).get("browse")):
+        if (
+            media_content_id in (None, "", "apps")
+            and self._app_id
+            and (self._app_id == "flimmer" or apps.get(self._app_id, {}).get("browse"))
+        ):
             media_content_id = self._app_id  # an app player opens straight into its own library
         if media_content_id in (None, "", "apps"):
             result = await self.coordinator.command("browse")
-            return BrowseMedia(title="Bigscreen apps", media_class="directory", media_content_id="apps",
-                               media_content_type=MediaType.APP, can_play=False, can_expand=True,
-                               children=[BrowseMedia(title=item["title"], media_class="app",
-                                                     media_content_type="app", media_content_id=item["id"],
-                                                     can_play=True, can_expand=_browsable(apps.get(item["id"], {})))
-                                         for item in result["items"]])
+            return BrowseMedia(
+                title="Bigscreen apps",
+                media_class="directory",
+                media_content_id="apps",
+                media_content_type=MediaType.APP,
+                can_play=False,
+                can_expand=True,
+                children=[
+                    BrowseMedia(
+                        title=item["title"],
+                        media_class="app",
+                        media_content_type="app",
+                        media_content_id=item["id"],
+                        can_play=True,
+                        can_expand=_browsable(apps.get(item["id"], {})),
+                    )
+                    for item in result["items"]
+                ],
+            )
         page = _BROWSE_ID.fullmatch(media_content_id)
         if not page:
             raise HomeAssistantError("Unsupported media catalogue")
         app_id, path, offset = page[1], page[2], int(page[3] or 0)
         if self._app_id not in (None, app_id):
             raise HomeAssistantError("Unsupported catalogue for this app player")
-        result = await self.coordinator.command("browse", app=app_id, offset=offset, limit=50,
-                                                **({"path": path} if path else {}))
+        result = await self.coordinator.command(
+            "browse", app=app_id, offset=offset, limit=50, **({"path": path} if path else {})
+        )
         if not result["items"] and result.get("loading"):
             raise HomeAssistantError("Flimmer is loading its channel catalogue")
         channels = app_id == "flimmer"
@@ -443,18 +527,46 @@ class BigscreenPlayer(CoordinatorEntity, MediaPlayerEntity):
         children = []
         for item in result["items"]:
             if item.get("path"):
-                children.append(BrowseMedia(title=item["name"], media_class="directory", media_content_type=section,
-                                            media_content_id=f"{app_id}/{item['path']}", can_play=False, can_expand=True))
+                children.append(
+                    BrowseMedia(
+                        title=item["name"],
+                        media_class="directory",
+                        media_content_type=section,
+                        media_content_id=f"{app_id}/{item['path']}",
+                        can_play=False,
+                        can_expand=True,
+                    )
+                )
                 continue
             kind = item.get("media_content_type") or "flimmer_channel"
-            children.append(BrowseMedia(title=item["name"], media_class=_MEDIA_CLASSES.get(kind.split("_", 1)[-1], "video"),
-                                        media_content_type=kind, media_content_id=item["id"],
-                                        can_play=True, can_expand=False))
+            children.append(
+                BrowseMedia(
+                    title=item["name"],
+                    media_class=_MEDIA_CLASSES.get(kind.split("_", 1)[-1], "video"),
+                    media_content_type=kind,
+                    media_content_id=item["id"],
+                    can_play=True,
+                    can_expand=False,
+                )
+            )
         if result.get("next_offset") is not None:
-            children.append(BrowseMedia(title="More channels" if channels else "More", media_class="directory",
-                                        media_content_type=section,
-                                        media_content_id=f"{here}:{result['next_offset']}",
-                                        can_play=False, can_expand=True))
+            children.append(
+                BrowseMedia(
+                    title="More channels" if channels else "More",
+                    media_class="directory",
+                    media_content_type=section,
+                    media_content_id=f"{here}:{result['next_offset']}",
+                    can_play=False,
+                    can_expand=True,
+                )
+            )
         title = "Flimmer channels" if channels else apps.get(app_id, {}).get("name", app_id) + " library"
-        return BrowseMedia(title=title, media_class="directory", media_content_id=f"{here}:{offset}",
-                           media_content_type=section, can_play=False, can_expand=True, children=children)
+        return BrowseMedia(
+            title=title,
+            media_class="directory",
+            media_content_id=f"{here}:{offset}",
+            media_content_type=section,
+            can_play=False,
+            can_expand=True,
+            children=children,
+        )

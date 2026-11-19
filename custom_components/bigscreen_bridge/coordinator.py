@@ -1,4 +1,5 @@
 """Push updates with periodic reconnect and identity verification."""
+
 import time
 from datetime import timedelta
 
@@ -10,20 +11,31 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from .client import BridgeAuthError, BridgeClient, BridgeClientError
 from .const import DOMAIN
 
-DIAGNOSTICS_INTERVAL = 30   # seconds between reads of the bridge's diagnostics
+DIAGNOSTICS_INTERVAL = 30  # seconds between reads of the bridge's diagnostics
 
 
 class BridgeCoordinator(DataUpdateCoordinator):
     def __init__(self, hass, entry):
         import logging
-        super().__init__(hass, logging.getLogger(__name__), name=DOMAIN, config_entry=entry,
-                         update_interval=timedelta(seconds=15))
+
+        super().__init__(
+            hass,
+            logging.getLogger(__name__),
+            name=DOMAIN,
+            config_entry=entry,
+            update_interval=timedelta(seconds=15),
+        )
         self.entry = entry
         self.closing = False
-        self.diagnostics = None          # the bridge's `diagnostics` reply; None until read or if unsupported
+        self.diagnostics = None  # the bridge's `diagnostics` reply; None until read or if unsupported
         self.diagnostics_at = 0.0
-        self.client = BridgeClient(async_get_clientsession(hass), entry.data["url"], entry.data["token"],
-                                   self.async_set_updated_data, self._disconnected)
+        self.client = BridgeClient(
+            async_get_clientsession(hass),
+            entry.data["url"],
+            entry.data["token"],
+            self.async_set_updated_data,
+            self._disconnected,
+        )
 
     def _disconnected(self):
         if not self.closing:

@@ -1,4 +1,5 @@
 """LedFx scenes, activated through the bridge."""
+
 from homeassistant.components.scene import Scene
 
 from .entity import BridgeEntity, light_sections
@@ -12,8 +13,11 @@ class LedFxScene(BridgeEntity, Scene):
     @property
     def available(self):
         ledfx = self.lights("ledfx")
-        return super().available and bool(ledfx.get("available")) and any(
-            s["id"] == self.scene_id for s in ledfx.get("scenes", []))
+        return (
+            super().available
+            and bool(ledfx.get("available"))
+            and any(s["id"] == self.scene_id for s in ledfx.get("scenes", []))
+        )
 
     async def async_activate(self, **kwargs):
         await self.coordinator.command("ledfx_scene", scene=self.scene_id, active=True)

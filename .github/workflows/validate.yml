@@ -19,6 +19,7 @@ jobs:
           python-version: "3.14"
       - run: pip install ruff==0.17.5
       - run: ruff check --output-format github custom_components
+      - run: ruff format --check custom_components
 
   hassfest:
     runs-on: ubuntu-latest
